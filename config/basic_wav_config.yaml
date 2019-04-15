@@ -1,0 +1,6 @@
+file_directory: /home/rfeldhans/Music/recordings
+file: "*"
+time_between_files_ms: 1000
+realtime_factor: 1.0
+esiaf_output_topic: /input
+default_frame_size: 1000
