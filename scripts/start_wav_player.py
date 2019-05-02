@@ -3,6 +3,7 @@
 from esiaf_wav_player.wav_player import WavPlayer
 import pyesiaf
 import rospy
+from moveit_ros_planning_interface._moveit_roscpp_initializer import roscpp_init
 
 # config
 import yaml
@@ -17,6 +18,9 @@ import soundfile
 
 # sleeping
 import time
+
+# threading imports
+import threading
 
 def esiaf_format_from_soundfile_info(sf_info):
     esiaf_format = pyesiaf.EsiafAudioFormat()
@@ -35,30 +39,18 @@ def esiaf_format_from_soundfile_info(sf_info):
         esiaf_format.rate = pyesiaf.Rate.RATE_96000
 
     # bitrate
-    if sf_info.subtype == soundfile._subtypes['PCM_S8']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_INT_8_SIGNED
-    elif sf_info.subtype == soundfile._subtypes['PCM_U8']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_INT_8_UNSIGNED
-    elif sf_info.subtype == soundfile._subtypes['PCM_16']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_INT_16_SIGNED
-    elif sf_info.subtype == soundfile._subtypes['PCM_24']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_INT_24_UNSIGNED
-    elif sf_info.subtype == soundfile._subtypes['PCM_32']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_INT_32_UNSIGNED
-    elif sf_info.subtype == soundfile._subtypes['FLOAT']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_FLOAT_32
-    elif sf_info.subtype == soundfile._subtypes['DOUBLE']:
-        esiaf_format.bitrate = pyesiaf.Bitrate.BIT_FLOAT_64
+    esiaf_format.bitrate = pyesiaf.Bitrate.BIT_FLOAT_64
 
     # channel
     esiaf_format.channels = sf_info.channels
 
     # endian
-    esiaf_format.endian = pyesiaf.Endian.BigEndian if sf_info.endian == soundfile._endians['BIG'] else pyesiaf.Endian.LittleEndian
+    esiaf_format.endian = pyesiaf.Endian.BigEndian if sf_info.endian == 'BIG' else pyesiaf.Endian.LittleEndian
     return esiaf_format
 
 # initialize rosnode
 rospy.init_node('esiaf_wav_player')
+roscpp_init('esiaf_wav_player', [])
 
 # read config
 rospy.loginfo('Loading config...')
@@ -78,7 +70,7 @@ if data['file'] == "*":
 else:
     files.append(join(data['file_directory'], data['file']))
 
-rospy.loginfo('Playback of files: ' + str(files))
+rospy.loginfo('Playback of files: ' + str([file.split('/')[-1] for file in files]))
 
 rospy.loginfo('Acquiring wav format, assuming every file has the same format...')
 
@@ -87,8 +79,8 @@ info = soundfile.info(files[0])
 
 
 rospy.loginfo('Creating esiaf handler...')
-handler = pyesiaf.Esiaf_Handler()
-handler.initialize_esiaf("esiaf_wav_player", pyesiaf.NodeDesignation.Other)
+handler = pyesiaf.Esiaf_Handler("wav_player", pyesiaf.NodeDesignation.Other, sys.argv)
+rospy.loginfo('Initializing esiaf handler...')
 
 rospy.loginfo('Setting up esiaf...')
 esiaf_format = esiaf_format_from_soundfile_info(info)
@@ -98,18 +90,28 @@ esiaf_audio_info.allowedFormat = esiaf_format
 
 rospy.loginfo('adding output...')
 handler.add_output_topic(esiaf_audio_info)
+handler.start_esiaf()
 
-# create the orchestrator
-rospy.loginfo('Creating Wav player...')
-for filename in files:
-    player = WavPlayer(handler,
-                       filename,
-                       data['realtime_factor'],
-                       data['esiaf_output_topic'],
-                       data['default_frame_size']
-                       )
-    player.play()
-    time.sleep(data['time_between_files_ms']/1000)
+
+# create the wav players
+def player_loop():
+    time.sleep(2)
+    for filename in files:
+        rospy.loginfo('Creating Wav player for ' + filename + ' ...')
+        player = WavPlayer(handler,
+                           filename,
+                           data['playback_speed'],
+                           data['esiaf_output_topic'],
+                           data['default_frame_size']
+                           )
+        player.play()
+        rospy.loginfo('playing finished!')
+        time.sleep(data['time_between_files_ms']/1000)
+    rospy.signal_shutdown('successfully finished')
+
+
+t = threading.Thread(target=player_loop)
+t.start()
 
 
 rospy.loginfo('Wav player ready!')

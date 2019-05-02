@@ -2,23 +2,29 @@ import rospy
 import pyesiaf
 from esiaf_ros.msg import RecordingTimeStamps
 import soundfile
+import StringIO
+
+def msg_to_string(msg):
+    buf = StringIO.StringIO()
+    msg.serialize(buf)
+    return buf.getvalue()
 
 
 def calc_frametime(file, framesize):
     sr = soundfile.info(file).samplerate
-    return rospy.Duration.from_sec(framesize/sr)
+    frac = float(framesize)/sr
+    return rospy.Duration.from_sec(frac)
 
 
 class WavPlayer():
 
-    def __init__(self, esiaf_handler, file, realtime_factor, topic, framesize):
+    def __init__(self, esiaf_handler, file, playback_speed, topic, framesize):
         self.esiaf_handler = esiaf_handler
         self.file = file
-        self.realtime_factor = realtime_factor
         self.topic = topic
         self.start_time = None
         self.framesize = framesize
-        self.frametime = calc_frametime(file, framesize)
+        self.frametime = playback_speed*calc_frametime(file, framesize)
 
     def play(self):
         for block in soundfile.blocks(self.file, blocksize=self.framesize):
@@ -31,6 +37,8 @@ class WavPlayer():
             timestamps.finish = end_time
 
             rospy.sleep(end_time - rospy.Time.now())
-
-            self.esiaf_handler.publish(self.topic, block, timestamps)
+            self.esiaf_handler.publish(self.topic,
+                                       block,
+                                       msg_to_string(timestamps)
+                                       )
             self.start_time = end_time
