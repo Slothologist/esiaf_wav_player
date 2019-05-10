@@ -80,7 +80,6 @@ info = soundfile.info(files[0])
 
 rospy.loginfo('Creating esiaf handler...')
 handler = pyesiaf.Esiaf_Handler("wav_player", pyesiaf.NodeDesignation.Other, sys.argv)
-rospy.loginfo('Initializing esiaf handler...')
 
 rospy.loginfo('Setting up esiaf...')
 esiaf_format = esiaf_format_from_soundfile_info(info)

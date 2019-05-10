@@ -10,6 +10,7 @@ add_definitions(-std=c++11)
 find_package(catkin REQUIRED
         rospy
         esiaf_ros
+        moveit_ros_planning_interface
         )
 
 
