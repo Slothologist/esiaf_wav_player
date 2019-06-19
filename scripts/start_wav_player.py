@@ -3,7 +3,6 @@
 from esiaf_wav_player.wav_player import WavPlayer
 import pyesiaf
 import rospy
-from moveit_ros_planning_interface._moveit_roscpp_initializer import roscpp_init
 
 # config
 import yaml
@@ -50,7 +49,7 @@ def esiaf_format_from_soundfile_info(sf_info):
 
 # initialize rosnode
 rospy.init_node('esiaf_wav_player')
-roscpp_init('esiaf_wav_player', [])
+pyesiaf.roscpp_init('esiaf_wav_player', [])
 
 # read config
 rospy.loginfo('Loading config...')
