@@ -3,6 +3,7 @@ import pyesiaf
 from esiaf_ros.msg import RecordingTimeStamps
 import soundfile
 import StringIO
+import numpy
 
 def msg_to_string(msg):
     buf = StringIO.StringIO()
@@ -42,3 +43,22 @@ class WavPlayer():
                                        msg_to_string(timestamps)
                                        )
             self.start_time = end_time
+
+        frames_per_second = 16000
+        timeout_in_seconds = 2. * 400./1000.
+        five_twelve_blocks = numpy.ceil(frames_per_second * timeout_in_seconds/512 )
+        filler_array = numpy.zeros((512,), numpy.int16)
+
+        for _ in range(five_twelve_blocks):
+            end_time = self.start_time + self.frametime
+            timestamps = RecordingTimeStamps()
+            timestamps.start = self.start_time
+            timestamps.finish = end_time
+
+            rospy.sleep(end_time - rospy.Time.now())
+            self.esiaf_handler.publish(self.topic,
+                                       filler_array,
+                                       msg_to_string(timestamps)
+                                       )
+            self.start_time = end_time
+

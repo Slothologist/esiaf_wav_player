@@ -3,6 +3,7 @@
 from esiaf_wav_player.wav_player import WavPlayer
 import pyesiaf
 import rospy
+from std_msgs.msg import String
 
 # config
 import yaml
@@ -90,6 +91,8 @@ rospy.loginfo('adding output...')
 handler.add_output_topic(esiaf_audio_info)
 handler.start_esiaf()
 
+finished_pub = rospy.Publisher('/esiaf/wav_player/finished_playing', String, queue_size= 100)
+
 
 # create the wav players
 def player_loop():
@@ -104,7 +107,9 @@ def player_loop():
                            )
         player.play()
         rospy.loginfo('playing finished!')
-        time.sleep(data['time_between_files_ms']/1000)
+        #time.sleep(data['time_between_files_ms']/1000)
+        fin = String(filename)
+        finished_pub.publish(fin)
     rospy.signal_shutdown('successfully finished')
 
 

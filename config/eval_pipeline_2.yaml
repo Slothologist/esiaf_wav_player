@@ -1,0 +1,6 @@
+file_directory: /home/rfeldhans/Music/recordings3/
+file: "*"
+time_between_files_ms: 800
+playback_speed: 1.0
+esiaf_output_topic: /input
+default_frame_size: 512
