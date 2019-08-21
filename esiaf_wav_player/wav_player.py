@@ -44,7 +44,7 @@ class WavPlayer():
             self.start_time = end_time
 
         frames_per_second = 16000
-        timeout_in_seconds = 2. * 400./1000.
+        timeout_in_seconds = 2. * 2000./1000.
         five_twelve_blocks = int(numpy.ceil(frames_per_second * timeout_in_seconds/512))
         filler_array = numpy.zeros((512,), numpy.float64)
 
