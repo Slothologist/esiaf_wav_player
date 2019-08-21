@@ -110,6 +110,9 @@ def player_loop():
         #time.sleep(data['time_between_files_ms']/1000)
         fin = String(filename)
         finished_pub.publish(fin)
+    pub = rospy.Publisher('/esiaf/wav_player/shutdown', String, queue_size=1)
+    pub.publish(String('done'))
+    time.sleep(2)
     rospy.signal_shutdown('successfully finished')
 
 
