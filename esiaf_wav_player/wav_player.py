@@ -1,5 +1,4 @@
 import rospy
-import pyesiaf
 from esiaf_ros.msg import RecordingTimeStamps
 import soundfile
 import StringIO
@@ -46,7 +45,7 @@ class WavPlayer():
 
         frames_per_second = 16000
         timeout_in_seconds = 2. * 400./1000.
-        five_twelve_blocks = numpy.ceil(frames_per_second * timeout_in_seconds/512 )
+        five_twelve_blocks = int(numpy.ceil(frames_per_second * timeout_in_seconds/512))
         filler_array = numpy.zeros((512,), numpy.int16)
 
         for _ in range(five_twelve_blocks):
