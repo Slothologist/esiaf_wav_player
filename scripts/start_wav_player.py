@@ -97,7 +97,7 @@ pub = rospy.Publisher('/esiaf/wav_player/shutdown', String, queue_size=1)
 
 # create the wav players
 def player_loop():
-    time.sleep(2)
+    time.sleep(10)
     for filename in files:
         rospy.loginfo('Creating Wav player for ' + filename + ' ...')
         player = WavPlayer(handler,
